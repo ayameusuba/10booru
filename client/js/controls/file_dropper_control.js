@@ -36,6 +36,7 @@ class FileDropperControl extends events.EventTarget {
         this._fileInputNode.style.display = "none";
         this._fileInputNode.multiple = options.allowMultiple || false;
         this._counter = 0;
+        this._documentPasteHandler = (e) => this._evtPaste(e);
 
         this._dropperNode.addEventListener("dragenter", (e) =>
             this._evtDragEnter(e)
@@ -75,12 +76,12 @@ class FileDropperControl extends events.EventTarget {
             );
         }
 
-        document.onpaste = (e) => {
-            if (!document.getElementById("post-upload")) {
-                return;
-            }
-            this._evtPaste(e);
-        };
+        if (this._options.pasteFromDocument) {
+            document.addEventListener("paste", this._documentPasteHandler);
+            views.monitorNodeRemoval(this._dropperNode, () => {
+                document.removeEventListener("paste", this._documentPasteHandler);
+            });
+        }
 
         this._originalHtml = this._dropperNode.innerHTML;
 

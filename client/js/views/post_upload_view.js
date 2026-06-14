@@ -170,6 +170,7 @@ class PostUploadView extends events.EventTarget {
                 foldUrls: true,
                 allowUrls: true,
                 allowMultiple: true,
+                pasteFromDocument: true,
                 lock: false,
             });
         this._contentFileDropper.addEventListener("fileadd", (e) =>
