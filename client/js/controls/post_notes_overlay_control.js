@@ -131,13 +131,6 @@ class ReadOnlyState extends State {
         return !this._control._notesHidden;
     }
 
-    evtCanvasMouseDown(e) {
-        this._control._toggleNotesVisibility();
-    }
-
-    evtNoteMouseDown(e, hoveredNote) {
-        this._control._toggleNotesVisibility();
-    }
 }
 
 class PassiveState extends State {
@@ -688,7 +681,7 @@ class PostNotesOverlayControl extends events.EventTarget {
         }
 
         const interactiveNode = e.target.closest
-            ? e.target.closest("a, button, input, textarea, select, label")
+            ? e.target.closest("a, button, input, textarea, select, label, video, audio, object, embed")
             : null;
 
         if (interactiveNode) {
