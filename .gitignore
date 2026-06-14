@@ -19,7 +19,3 @@ target/
 # local patch backups
 *.bak
 *.bak-*
-
-# local patch backups
-*.bak
-*.bak-*

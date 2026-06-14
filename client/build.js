@@ -128,12 +128,6 @@ function bundleHtml() {
 }
 
 
-function cleanCss(css) {
-    css = css.replace(/@-o-keyframes\s+[^\{]+\{(?:[^\{\}]|\{[^\{\}]*\})*\}/g, '');
-    css = css.replace(/overflow-x:\s*none\b/g, 'overflow-x:hidden');
-    css = css.replace(/-moz-osx-font-smoothing\s*:[^;\{\}]+;?/g, '');
-    return css;
-}
 
 function bundleCss() {
     const stylus = require('stylus');
