@@ -100,11 +100,12 @@
             <% const tagCategoryLabels = {
                 default: "Uncategorized:",
                 artist: "Artist:",
+                character: "Character:",
                 copyright: "Copyright:",
                 general: "General:",
                 meta: "Meta:",
             }; %>
-            <% const tagCategoryOrder = ["default", "artist", "copyright", "general", "meta"]; %>
+            <% const tagCategoryOrder = ["default", "artist", "character", "copyright", "general", "meta"]; %>
             <% const tagsByCategory = {}; %>
 
             <% for (let tag of ctx.post.tags) { %>
