@@ -1,5 +1,14 @@
 <div class='readonly-sidebar'>
     <article class='details'>
+
+        <section class='social'>
+            <div class='score-container'></div>
+
+            <div class='fav-container'></div>
+        </section>
+
+        <h1 class='statistics-header'>Statistics</h1>
+        <div class='statistics-body'>
         <section class='download'>
             <a rel='external' href='<%- ctx.post.contentUrl %>'>
                 <i class='fa fa-download'></i><!--
@@ -28,7 +37,7 @@
 
         <section class='upload-info'>
             <%= ctx.makeUserLink(ctx.post.user) %>,
-            <%= ctx.makeRelativeTime(ctx.post.creationTime) %>
+            <%= ctx.makeExactTime(ctx.post.creationTime) %>
         </section>
 
         <% if (ctx.enableSafety) { %>
@@ -47,10 +56,13 @@
 
         <% if (ctx.post.source) { %>
             <section class='source'>
-                Source: <% for (let i = 0; i < ctx.post.sourceSplit.length; i++) { %>
-                    <% if (i != 0) { %>&middot;<% } %>
-                    <a href='<%- ctx.post.sourceSplit[i] %>' title='<%- ctx.post.sourceSplit[i] %>'><%- ctx.extractRootDomain(ctx.post.sourceSplit[i]) %></a>
-                <% } %>
+                <span class='source-label'>Source:</span>
+                <span class='source-links'>
+                    <% for (let i = 0; i < ctx.post.sourceSplit.length; i++) { %>
+                        <% if (i != 0) { %>&middot;<% } %>
+                        <a href='<%- ctx.post.sourceSplit[i] %>' title='<%- ctx.post.sourceSplit[i] %>'><%- ctx.post.sourceSplit[i] %></a>
+                    <% } %>
+                </span>
             </section>
         <% } %>
 
@@ -65,12 +77,7 @@
             <a href='https://exhentai.org/?fs_similar=1&fs_exp=1&f_shash=<%- ctx.post.checksumSHA1 %>'>Ex</a> &middot;
             <a href='https://trace.moe/?url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>Tm</a>
         </section>
-
-        <section class='social'>
-            <div class='score-container'></div>
-
-            <div class='fav-container'></div>
-        </section>
+        </div>
     </article>
 
     <% if (ctx.post.relations.length) { %>
@@ -89,29 +96,51 @@
     <% } %>
 
     <nav class='tags'>
-        <h1>Tags (<%- ctx.post.tags.length %>)</h1>
         <% if (ctx.post.tags.length) { %>
-            <ul class='compact-tags'><!--
-                --><% for (let tag of ctx.post.tags) { %><!--
-                    --><li><!--
-                        --><% if (ctx.canViewTags) { %><!--
-                        --><a href='<%- ctx.formatClientLink('tag', tag.names[0]) %>' class='<%= ctx.makeCssName(tag.category, 'tag') %>'><!--
-                            --><i class='fa fa-tag'></i><!--
+            <% const tagCategoryLabels = {
+                default: "Uncategorized:",
+                artist: "Artist:",
+                copyright: "Copyright:",
+                general: "General:",
+                meta: "Meta:",
+            }; %>
+            <% const tagCategoryOrder = ["default", "artist", "copyright", "general", "meta"]; %>
+            <% const tagsByCategory = {}; %>
+
+            <% for (let tag of ctx.post.tags) { %>
+                <% const rawCategory = tag.category || "default"; %>
+                <% const displayCategory = tagCategoryLabels[rawCategory] ? rawCategory : "general"; %>
+                <% if (!tagsByCategory[displayCategory]) { tagsByCategory[displayCategory] = []; } %>
+                <% tagsByCategory[displayCategory].push(tag); %>
+            <% } %>
+
+            <% for (let category of tagCategoryOrder) { %>
+                <% const tags = tagsByCategory[category] || []; %>
+                <% if (tags.length) { %>
+                    <h2 class='tag-category-header'><%- tagCategoryLabels[category] %></h2>
+                    <ul class='compact-tags'><!--
+                        --><% for (let tag of tags) { %><!--
+                            --><li><!--
+                                --><% if (ctx.canViewTags) { %><!--
+                                --><a href='<%- ctx.formatClientLink('tag', tag.names[0]) %>' class='<%= ctx.makeCssName(tag.category || "default", 'tag') %>'><!--
+                                    --><i class='fa fa-tag'></i><!--
+                                --><% } %><!--
+                                --><% if (ctx.canViewTags) { %><!--
+                                    --></a><!--
+                                --><% } %><!--
+                                --><% if (ctx.canListPosts) { %><!--
+                                    --><a href='<%- ctx.formatClientLink('posts', {query: ctx.escapeTagName(tag.names[0])}) %>' class='<%= ctx.makeCssName(tag.category || "default", 'tag') %>'><!--
+                                --><% } %><!--
+                                    --><%- ctx.getPrettyName(tag.names[0]) %><!--
+                                --><% if (ctx.canListPosts) { %><!--
+                                    --></a><!--
+                                --><% } %>&#32;<!--
+                                --><span class='tag-usages' data-pseudo-content='<%- tag.postCount %>'></span><!--
+                            --></li><!--
                         --><% } %><!--
-                        --><% if (ctx.canViewTags) { %><!--
-                            --></a><!--
-                        --><% } %><!--
-                        --><% if (ctx.canListPosts) { %><!--
-                            --><a href='<%- ctx.formatClientLink('posts', {query: ctx.escapeTagName(tag.names[0])}) %>' class='<%= ctx.makeCssName(tag.category, 'tag') %>'><!--
-                        --><% } %><!--
-                            --><%- ctx.getPrettyName(tag.names[0]) %><!--
-                        --><% if (ctx.canListPosts) { %><!--
-                            --></a><!--
-                        --><% } %>&#32;<!--
-                        --><span class='tag-usages' data-pseudo-content='<%- tag.postCount %>'></span><!--
-                    --></li><!--
-                --><% } %><!--
-            --></ul>
+                    --></ul>
+                <% } %>
+            <% } %>
         <% } else { %>
             <p>
                 No tags yet!

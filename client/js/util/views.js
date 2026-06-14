@@ -32,6 +32,34 @@ function makeMarkdown(text) {
     return misc.formatMarkdown(text);
 }
 
+
+function makeExactTime(time) {
+    if (!time) {
+        return "never";
+    }
+
+    const date = new Date(time);
+    if (Number.isNaN(date.getTime())) {
+        return String(time);
+    }
+
+    const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;",
+    }[char]));
+
+    const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+    const pad = (value) => String(value).padStart(2, "0");
+    const text =
+        `${pad(date.getMonth() + 1)}/${pad(date.getDate())}/${date.getFullYear()}` +
+        ` (${weekdays[date.getDay()]}) ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+
+    return `<time datetime="${escapeHtml(date.toISOString())}" title="${escapeHtml(misc.formatRelativeTime(time))}">${escapeHtml(text)}</time>`;
+}
+
 function makeRelativeTime(time) {
     return makeElement(
         "time",
@@ -436,6 +464,7 @@ function getTemplate(templatePath) {
             getPostUrl: getPostUrl,
             getPostEditUrl: getPostEditUrl,
             makeRelativeTime: makeRelativeTime,
+            makeExactTime: makeExactTime,
             makeFileSize: makeFileSize,
             makeMarkdown: makeMarkdown,
             makeThumbnail: makeThumbnail,
