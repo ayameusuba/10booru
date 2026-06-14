@@ -127,6 +127,14 @@ function bundleHtml() {
     console.info('Bundled HTML');
 }
 
+
+function cleanCss(css) {
+    css = css.replace(/@-o-keyframes\s+[^\{]+\{(?:[^\{\}]|\{[^\{\}]*\})*\}/g, '');
+    css = css.replace(/overflow-x:\s*none\b/g, 'overflow-x:hidden');
+    css = css.replace(/-moz-osx-font-smoothing\s*:[^;\{\}]+;?/g, '');
+    return css;
+}
+
 function bundleCss() {
     const stylus = require('stylus');
 
@@ -134,18 +142,38 @@ function bundleCss() {
         return require('csso').minify(css).css;
     }
 
+    function stripBadCss(css) {
+        return css
+            // Obsolete Opera keyframes trigger console warnings in Chromium.
+            .replace(/@-o-keyframes[^{]+\{(?:[^{}]|\{[^{}]*\})*\}/g, '')
+            // Firefox-only selector triggers bad-selector warnings in Chromium.
+            .replace(/[^{}]*:-moz-focus-inner[^{}]*\{[^{}]*\}/g, '')
+            // Old Firefox-only smoothing property triggers unknown-property warnings in Chromium.
+            .replace(/-moz-osx-font-smoothing\s*:[^;{}]+;?/g, '');
+    }
+
     let css = '';
     for (const file of glob.sync('./css/**/*.styl')) {
         css += stylus.render(readTextFile(file), { filename: file });
     }
-    fs.writeFileSync('./public/css/app.min.css', minifyCss(css));
+
+    const minifiedCss = minifyCss(stripBadCss(css));
+    const leaks = [...new Set(minifiedCss.match(/\$[A-Za-z_][A-Za-z0-9_-]*/g) || [])];
+    if (leaks.length > 0) {
+        console.error('Stylus variable leaked into compiled CSS: ' + leaks.join(', '));
+        throw new Error('Stylus variable leaked into compiled CSS');
+    }
+
+    fs.writeFileSync('./public/css/app.min.css', minifiedCss);
+
     if (process.argv.includes('--gzip')) {
         gzipFile('./public/css/app.min.css');
     }
 
-    fs.copyFileSync(
-        './node_modules/font-awesome/css/font-awesome.min.css',
-        './public/css/vendor.min.css');
+    let vendorCss = readTextFile('./node_modules/font-awesome/css/font-awesome.min.css');
+    vendorCss = stripBadCss(vendorCss);
+    fs.writeFileSync('./public/css/vendor.min.css', vendorCss);
+
     if (process.argv.includes('--gzip')) {
         gzipFile('./public/css/vendor.min.css');
     }

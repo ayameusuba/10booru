@@ -27,3 +27,33 @@
 
         img
             image-orientation: from-image
+
+        // Local patch:
+        // - Right-click/copy works on the image outside note polygons.
+        // - Existing notes still hover/click because only painted SVG shapes get events.
+        // - Note editing/drawing states are left alone.
+        .post-overlay[data-state='read-only']
+            pointer-events: none !important
+
+            .notes-overlay
+                pointer-events: none !important
+
+                g
+                    pointer-events: none !important
+
+                    polygon,
+                    ellipse
+                        pointer-events: visiblePainted !important
+
+        .post-overlay[data-state='passive']
+            pointer-events: none !important
+
+            .notes-overlay
+                pointer-events: none !important
+
+                g
+                    pointer-events: none !important
+
+                    polygon,
+                    ellipse
+                        pointer-events: visiblePainted !important

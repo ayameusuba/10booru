@@ -1,7 +1,7 @@
 <div class='readonly-sidebar'>
     <article class='details'>
         <section class='download'>
-            <a href='<%- ctx.post.contentUrl %>' download>
+            <a rel='external' href='<%- ctx.post.contentUrl %>'>
                 <i class='fa fa-download'></i><!--
             --><%= ctx.makeFileSize(ctx.post.fileSize) %> <!--
                 --><%- {
@@ -56,9 +56,14 @@
 
         <section class='search'>
             Search on
-            <a href='http://iqdb.org/?url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>IQDB</a> &middot;
-            <a href='https://danbooru.donmai.us/posts?tags=md5:<%- ctx.post.checksumMD5 %>'>Danbooru</a> &middot;
-            <a href='https://lens.google.com/uploadbyurl?url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>Google Images</a>
+            <a href='https://lens.google.com/uploadbyurl?url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>G</a> &middot;
+            <a href='https://saucenao.com/search.php?db=999&hide=0&url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>Sn</a> &middot;
+            <a href='https://ascii2d.net/search/url/<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>As</a> &middot;
+            <a href='https://iqdb.org/?url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>Iq</a> &middot;
+            <a href='https://danbooru.donmai.us/posts?tags=md5:<%- ctx.post.checksumMD5 %>'>Db</a> &middot;
+            <a href='https://gelbooru.com/index.php?page=post&s=list&tags=md5:<%- ctx.post.checksumMD5 %>'>Gb</a> &middot;
+            <a href='https://exhentai.org/?fs_similar=1&fs_exp=1&f_shash=<%- ctx.post.checksumSHA1 %>'>Ex</a> &middot;
+            <a href='https://trace.moe/?url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>Tm</a>
         </section>
 
         <section class='social'>

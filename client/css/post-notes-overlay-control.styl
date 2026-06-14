@@ -6,6 +6,11 @@
     &[data-state=drawing-polygon]
         &:after
             box-sizing: border-box
+        white-space: pre-wrap
+        overflow-wrap: anywhere
+        & *
+            white-space: inherit
+            overflow-wrap: inherit
             border: 0.3em dashed $active-note-overlay-border-color
             background: $active-note-overlay-background-color
             display: block
