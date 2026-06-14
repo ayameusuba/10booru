@@ -629,13 +629,13 @@ class PostNotesOverlayControl extends events.EventTarget {
 
         const keyHandler = (e) => this._evtCanvasKeyDown(e);
         document.addEventListener("keydown", keyHandler);
-        this._svgNode.addEventListener("mousedown", (e) =>
+        this._hostNode.addEventListener("mousedown", (e) =>
             this._evtCanvasMouseDown(e)
         );
-        this._svgNode.addEventListener("mouseup", (e) =>
+        this._hostNode.addEventListener("mouseup", (e) =>
             this._evtCanvasMouseUp(e)
         );
-        this._svgNode.addEventListener("mousemove", (e) =>
+        this._hostNode.addEventListener("mousemove", (e) =>
             this._evtCanvasMouseMove(e)
         );
 
