@@ -10,7 +10,7 @@
         <h1 class='statistics-header'>Statistics</h1>
         <div class='statistics-body'>
         <section class='download'>
-            <a rel='external' href='<%- ctx.post.contentUrl %>'>
+            <a target='_blank' rel='external noopener noreferrer' href='<%- ctx.post.contentUrl %>'>
                 <i class='fa fa-download'></i><!--
             --><%= ctx.makeFileSize(ctx.post.fileSize) %> <!--
                 --><%- {
@@ -47,6 +47,8 @@
             </section>
         <% } %>
 
+            <section class='post-id'><a href='<%= ctx.getPostUrl(ctx.post.id, ctx.parameters) %>'>@<%- ctx.post.id %></a></section>
+
         <section class='zoom'>
             <a href class='fit-original'>Original zoom</a> &middot;
             <a href class='fit-width'>fit width</a> &middot;
@@ -55,27 +57,19 @@
         </section>
 
         <% if (ctx.post.source) { %>
-            <section class='source'>
-                <span class='source-label'>Source:</span>
-                <span class='source-links'>
-                    <% for (let i = 0; i < ctx.post.sourceSplit.length; i++) { %>
-                        <% if (i != 0) { %>&middot;<% } %>
-                        <a href='<%- ctx.post.sourceSplit[i] %>' title='<%- ctx.post.sourceSplit[i] %>'><%- ctx.post.sourceSplit[i] %></a>
-                    <% } %>
-                </span>
-            </section>
+            <section class='source'>Source: <% for (let i = 0; i < ctx.post.sourceSplit.length; i++) { %><% if (i != 0) { %>&middot; <% } %><a href='<%- ctx.post.sourceSplit[i] %>' title='<%- ctx.post.sourceSplit[i] %>'><%- ctx.post.sourceSplit[i] %></a><% } %></section>
         <% } %>
 
         <section class='search'>
             Search on
-            <a href='https://lens.google.com/uploadbyurl?url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>G</a> &middot;
-            <a href='https://saucenao.com/search.php?db=999&hide=0&url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>Sn</a> &middot;
-            <a href='https://ascii2d.net/search/url/<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>As</a> &middot;
-            <a href='https://iqdb.org/?url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>Iq</a> &middot;
-            <a href='https://danbooru.donmai.us/posts?tags=md5:<%- ctx.post.checksumMD5 %>'>Db</a> &middot;
-            <a href='https://gelbooru.com/index.php?page=post&s=list&tags=md5:<%- ctx.post.checksumMD5 %>'>Gb</a> &middot;
-            <a href='https://exhentai.org/?fs_similar=1&fs_exp=1&f_shash=<%- ctx.post.checksumSHA1 %>'>Ex</a> &middot;
-            <a href='https://trace.moe/?url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>Tm</a>
+            <a target='_blank' rel='external noopener' href='https://lens.google.com/uploadbyurl?url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>G</a> &middot;
+            <a target='_blank' rel='external noopener' href='https://saucenao.com/search.php?db=999&hide=0&url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>Sn</a> &middot;
+            <a target='_blank' rel='external noopener' href='https://ascii2d.net/search/url/<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>As</a> &middot;
+            <a target='_blank' rel='external noopener' href='https://iqdb.org/?url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>Iq</a> &middot;
+            <a target='_blank' rel='external noopener' href='https://danbooru.donmai.us/posts?tags=md5:<%- ctx.post.checksumMD5 %>'>Db</a> &middot;
+            <a target='_blank' rel='external noopener' href='https://gelbooru.com/index.php?page=post&s=list&tags=md5:<%- ctx.post.checksumMD5 %>'>Gb</a> &middot;
+            <a target='_blank' rel='external noopener' href='https://exhentai.org/?fs_similar=1&fs_exp=1&f_shash=<%- ctx.post.checksumSHA1 %>'>Ex</a> &middot;
+            <a target='_blank' rel='external noopener' href='https://trace.moe/?url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>Tm</a>
         </section>
         </div>
     </article>

@@ -55,7 +55,7 @@ function makeExactTime(time) {
     const pad = (value) => String(value).padStart(2, "0");
     const text =
         `${pad(date.getMonth() + 1)}/${pad(date.getDate())}/${date.getFullYear()}` +
-        ` (${weekdays[date.getDay()]}) ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        ` (${weekdays[date.getDay()]}) ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 
     return `<time datetime="${escapeHtml(date.toISOString())}" title="${escapeHtml(misc.formatRelativeTime(time))}">${escapeHtml(text)}</time>`;
 }

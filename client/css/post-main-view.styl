@@ -291,3 +291,62 @@
 
         .compact-tags
             margin: 0 0 0.25em
+
+/* 10booru post sidebar metadata refinements */
+.post-view .readonly-sidebar
+    .statistics-body
+        .post-id
+            margin: 0 0 0.12em
+
+        .safety
+            margin-bottom: 0.35em
+
+        .zoom
+            margin-top: 0.35em
+
+        .source
+            display: block
+            margin-top: 0.16em
+
+            .source-label
+                display: inline
+
+                &::after
+                    content: " "
+
+            .source-links
+                display: inline
+                width: auto
+                max-width: none
+                line-height: inherit
+
+            a
+                display: inline
+                max-width: none
+                white-space: normal
+                word-break: break-all
+                overflow-wrap: anywhere
+
+/* 10booru post sidebar metadata final fixes */
+.post-view .readonly-sidebar
+    .statistics-body
+        .safety
+            margin-bottom: 0.12em
+
+        .post-id
+            margin: 0.08em 0 0.32em
+
+        .zoom
+            margin-top: 0.28em
+
+        .source
+            display: block
+            margin-top: 0.16em
+            line-height: 1.3
+
+            a
+                display: inline !important
+                max-width: none !important
+                white-space: normal
+                word-break: break-all
+                overflow-wrap: normal
