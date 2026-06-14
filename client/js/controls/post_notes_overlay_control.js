@@ -128,7 +128,15 @@ class ReadOnlyState extends State {
     }
 
     get canShowNoteText() {
-        return true;
+        return !this._control._notesHidden;
+    }
+
+    evtCanvasMouseDown(e) {
+        this._control._toggleNotesVisibility();
+    }
+
+    evtNoteMouseDown(e, hoveredNote) {
+        this._control._toggleNotesVisibility();
     }
 }
 
@@ -593,7 +601,8 @@ class PostNotesOverlayControl extends events.EventTarget {
         super();
         this._post = post;
         this._hostNode = hostNode;
-
+        this._postContentNode = hostNode.parentNode || hostNode;
+        this._notesHidden = false;
         this._svgNode = document.createElementNS(svgNS, "svg");
         this._svgNode.classList.add("resize-listener");
         this._svgNode.classList.add("notes-overlay");
@@ -603,6 +612,13 @@ class PostNotesOverlayControl extends events.EventTarget {
             this._createPolygonNode(note);
         }
         this._hostNode.appendChild(this._svgNode);
+        this._boundPostContentMouseDown = (e) =>
+            this._evtPostContentMouseDown(e);
+        this._postContentNode.addEventListener(
+            "mousedown",
+            this._boundPostContentMouseDown,
+            true
+        );
         this._post.addEventListener("change", (e) => this._evtPostChange(e));
         this._post.notes.addEventListener("remove", (e) => {
             this._deleteDomNode(e.detail.note);
@@ -635,6 +651,11 @@ class PostNotesOverlayControl extends events.EventTarget {
 
         views.monitorNodeRemoval(this._hostNode, () => {
             this._hostNode.removeChild(this._svgNode);
+            this._postContentNode.removeEventListener(
+                "mousedown",
+                this._boundPostContentMouseDown,
+                true
+            );
             document.removeEventListener("keydown", keyHandler);
             document.body.removeChild(this._textNode);
             this._state = new ReadOnlyState(this);
@@ -644,15 +665,58 @@ class PostNotesOverlayControl extends events.EventTarget {
     }
 
     switchToPassiveEdit() {
+        this._setNotesHidden(false);
         this._state = new PassiveState(this);
     }
 
     switchToDrawing() {
+        this._setNotesHidden(false);
         this._state = new ReadyToDrawState(this);
     }
 
     get boundingBox() {
         return this._hostNode.getBoundingClientRect();
+    }
+
+    _evtPostContentMouseDown(e) {
+        if (e.defaultPrevented || e.button !== 0) {
+            return;
+        }
+
+        if (!(this._state instanceof ReadOnlyState)) {
+            return;
+        }
+
+        const interactiveNode = e.target.closest
+            ? e.target.closest("a, button, input, textarea, select, label")
+            : null;
+
+        if (interactiveNode) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        this._toggleNotesVisibility();
+    }
+
+    _toggleNotesVisibility() {
+        this._setNotesHidden(!this._notesHidden);
+    }
+
+    _setNotesHidden(hidden) {
+        this._notesHidden = hidden;
+        this._svgNode.classList.toggle("notes-hidden", hidden);
+
+        for (let groupNode of this._svgNode.querySelectorAll("g")) {
+            groupNode.style.visibility = hidden ? "hidden" : "";
+        }
+
+        if (hidden) {
+            this._hideNoteText();
+        }
     }
 
     _evtPostChange(e) {
@@ -719,6 +783,10 @@ class PostNotesOverlayControl extends events.EventTarget {
     }
 
     _showNoteText(note) {
+        if (this._notesHidden) {
+            return;
+        }
+
         this._textNode.querySelector(".wrapper").innerHTML =
             misc.formatMarkdown(note.text);
         this._textNode.style.display = "block";
@@ -781,20 +849,24 @@ class PostNotesOverlayControl extends events.EventTarget {
     _createPolygonNode(note) {
         const groupNode = document.createElementNS(svgNS, "g");
         note.groupNode = groupNode;
-        {
-            const node = document.createElementNS(svgNS, "polygon");
-            note.polygonNode = node;
-            node.setAttribute("vector-effect", "non-scaling-stroke");
-            node.setAttribute("stroke-alignment", "inside");
-            node.addEventListener("mouseenter", (e) =>
-                this._evtNoteMouseEnter(e, note)
-            );
-            node.addEventListener("mouseleave", (e) =>
-                this._evtNoteMouseLeave(e)
-            );
-            this._updatePolygonNotePoints(note);
-            groupNode.appendChild(node);
+
+        if (this._notesHidden) {
+            groupNode.style.visibility = "hidden";
         }
+
+        const node = document.createElementNS(svgNS, "polygon");
+        note.polygonNode = node;
+        node.setAttribute("vector-effect", "non-scaling-stroke");
+        node.setAttribute("stroke-alignment", "inside");
+        node.addEventListener("mouseenter", (e) =>
+            this._evtNoteMouseEnter(e, note)
+        );
+        node.addEventListener("mouseleave", (e) =>
+            this._evtNoteMouseLeave(e)
+        );
+        this._updatePolygonNotePoints(note);
+        groupNode.appendChild(node);
+
         for (let point of note.polygon) {
             this._createEdgeNode(point, groupNode);
         }
