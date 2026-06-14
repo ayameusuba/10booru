@@ -181,3 +181,81 @@ $cancel-button-color = tomato
         color: $inactive-link-color-darktheme
     &:last-child .move-down
         color: $inactive-link-color-darktheme
+
+// 10booru upload landing UX
+#post-upload form .dropper-container
+    margin: 0 auto 1em auto
+    text-align: center
+
+    .file-dropper-holder
+        margin: 0 auto
+
+    .file-dropper
+        display: block
+        box-sizing: border-box
+        width: 100%
+        padding: 1.4em 1em
+        border: 2px solid $main-color
+        background: $upload-header-background-color
+        color: $text-color
+        font-size: 150%
+        text-align: center
+        cursor: pointer
+
+        &:hover,
+        &.active
+            border-color: $main-color
+
+        small
+            display: block
+            margin-top: 0.65em
+            color: $inactive-link-color
+            font-size: 55%
+            line-height: 1.35
+
+    .url-toggle
+        margin: 0.8em 0 0 0
+        padding: 0
+        border: 0
+        background: transparent
+        color: $main-color
+        font: inherit
+        cursor: pointer
+
+        &:hover
+            text-decoration: underline
+
+        &:focus
+            outline: 1px dotted $main-color
+
+    .url-holder
+        margin-top: 0.8em
+        text-align: center
+
+        &[hidden]
+            display: none
+
+        input[type=text]
+            display: block
+            box-sizing: border-box
+            width: 24em
+            max-width: 100%
+            margin: 0 auto 0.45em auto
+            text-align: center
+
+        button
+            min-width: 8.5em
+            font-size: 120%
+
+.darktheme #post-upload form .dropper-container
+    .file-dropper
+        background: $upload-header-background-color-darktheme
+        border-color: $upload-header-background-color-darktheme
+        color: $text-color-darktheme
+
+        &:hover,
+        &.active
+            border-color: $main-color
+
+        small
+            color: $inactive-link-color-darktheme

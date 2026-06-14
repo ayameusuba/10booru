@@ -111,9 +111,14 @@ class PostEditSidebarControl extends events.EventTarget {
             this._contentFileDropper = new FileDropperControl(
                 this._contentInputNode,
                 {
+                    extraText:
+                        "Allowed extensions: .jpg, .png, .gif, .webm, .mp4, .swf, .avif, .heif, .heic",
+                    selectDropText: "Select or drop file",
+                    urlPlaceholder: "Put your link in here, onii-chan~",
+                    urlButtonText: "Go!",
+                    foldUrls: true,
                     allowUrls: true,
                     lock: true,
-                    urlPlaceholder: "...or paste an URL here.",
                 }
             );
             this._contentFileDropper.addEventListener("fileadd", (e) => {
@@ -127,7 +132,10 @@ class PostEditSidebarControl extends events.EventTarget {
         if (this._thumbnailInputNode) {
             this._thumbnailFileDropper = new FileDropperControl(
                 this._thumbnailInputNode,
-                { lock: true }
+                {
+                    selectDropText: "Select or drop thumbnail",
+                    lock: true,
+                }
             );
             this._thumbnailFileDropper.addEventListener("fileadd", (e) => {
                 this._newPostThumbnail = e.detail.files[0];

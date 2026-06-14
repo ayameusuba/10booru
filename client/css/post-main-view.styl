@@ -350,3 +350,133 @@
                 white-space: normal
                 word-break: break-all
                 overflow-wrap: normal
+
+// 10booru post edit file dropper UX
+.post-view .edit-sidebar
+    .dropper-container
+        text-align: center
+
+    .file-dropper
+        display: block
+        box-sizing: border-box
+        width: 100%
+        padding: 0.9em 0.6em
+        border: 2px solid $main-color
+        background: $top-navigation-color
+        color: $text-color
+        cursor: pointer
+
+        &:hover,
+        &.active
+            border-color: $main-color
+
+        small
+            display: block
+            margin-top: 0.45em
+            color: $inactive-link-color
+            font-size: 85%
+            line-height: 1.3
+
+    .url-toggle
+        display: inline-block
+        width: auto
+        margin: 0.6em 0 0 0
+        padding: 0
+        border: 0
+        background: transparent
+        color: $main-color
+        font: inherit
+        cursor: pointer
+
+        &:hover
+            text-decoration: underline
+
+        &:focus
+            border: 0 !important
+            outline: 1px dotted $main-color
+
+    .url-holder
+        margin-top: 0.6em
+
+        &[hidden]
+            display: none
+
+.darktheme .post-view .edit-sidebar
+    .file-dropper
+        background: $top-navigation-color-darktheme
+        color: $text-color-darktheme
+
+        small
+            color: $inactive-link-color-darktheme
+
+// 10booru post relation strip
+.post-view
+    .post-relation-strip
+        margin: 0 0 0.7em 0
+        padding: 0.55em 0.7em
+        border: 1px solid $line-color
+        background: $top-navigation-color
+        box-sizing: border-box
+
+    .post-relation-strip-header
+        margin-bottom: 0.55em
+        font-size: 90%
+
+    .post-relation-strip.collapsed
+        padding-top: 0.35em
+        padding-bottom: 0.35em
+
+        .post-relation-strip-header
+            margin-bottom: 0
+            line-height: 1.15
+
+        a
+            margin-left: 0.35em
+
+    .post-relation-strip-posts
+        display: flex
+        flex-wrap: wrap
+        gap: 0.55em
+        align-items: flex-start
+
+    .post-relation-strip-posts[hidden]
+        display: none
+
+    .post-relation-strip-thumbnail
+        display: block
+        padding: 0
+        border: 2px solid $main-color
+        background: transparent
+        line-height: 0
+
+        &.current
+            box-shadow: 0 0 0 0.25em $line-color
+
+        .thumbnail
+            display: block
+            width: auto
+            height: auto
+            line-height: 0
+            background-image: none !important
+
+            img
+                display: block
+                width: auto
+                height: 9em
+                max-width: 14em
+                opacity: 1
+                position: static
+
+    .readonly-sidebar
+        nav.relations
+            display: none
+
+.darktheme .post-view
+    .post-relation-strip
+        background: $top-navigation-color-darktheme
+
+    .post-relation-strip-thumbnail
+        background: transparent
+
+        &.current
+            box-shadow: 0 0 0 0.25em $top-navigation-color-darktheme

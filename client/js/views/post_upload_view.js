@@ -161,16 +161,17 @@ class PostUploadView extends events.EventTarget {
             return this._uploadables.findIndex((u2) => u.key === u2.key);
         };
 
-        this._contentFileDropper = new FileDropperControl(
-            this._contentInputNode,
-            {
+        this._contentFileDropper = new FileDropperControl(this._contentInputNode, {
                 extraText:
                     "Allowed extensions: .jpg, .png, .gif, .webm, .mp4, .swf, .avif, .heif, .heic",
+                selectDropText: "Select or drop files",
+                urlPlaceholder: "Put your link in here, onii-chan~",
+                urlButtonText: "Go!",
+                foldUrls: true,
                 allowUrls: true,
                 allowMultiple: true,
                 lock: false,
-            }
-        );
+            });
         this._contentFileDropper.addEventListener("fileadd", (e) =>
             this._evtFilesAdded(e)
         );

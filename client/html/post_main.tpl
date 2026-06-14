@@ -50,6 +50,33 @@
     </aside>
 
     <div class='content'>
+<% if (!ctx.editMode && ctx.post.relations && ctx.post.relations.length) { %>
+    <section class='post-relation-strip'>
+        <div class='post-relation-strip-header'>
+            This post has
+            <%- ctx.post.relations.length %>
+            related <%- ctx.post.relations.length === 1 ? 'post' : 'posts' %>
+            <a href='#' class='post-relation-strip-toggle' onclick="const strip=this.closest('.post-relation-strip'); const posts=strip.querySelector('.post-relation-strip-posts'); if (posts.hasAttribute('hidden')) { posts.removeAttribute('hidden'); strip.classList.remove('collapsed'); this.textContent='hide «'; } else { posts.setAttribute('hidden', ''); strip.classList.add('collapsed'); this.textContent='show »'; } return false;">hide «</a>
+        </div>
+
+        <div class='post-relation-strip-posts'>
+            <a class='post-relation-strip-thumbnail current'
+                href='<%- ctx.formatClientLink("post", ctx.post.id) %>'
+                title='Current post @<%- ctx.post.id %>'>
+                <%= ctx.makeThumbnail(ctx.post.thumbnailUrl) %>
+            </a>
+
+            <% for (let post of ctx.post.relations) { %>
+            <a class='post-relation-strip-thumbnail'
+                href='<%- ctx.formatClientLink("post", post.id) %>'
+                title='Related post @<%- post.id %>'>
+                <%= ctx.makeThumbnail(post.thumbnailUrl) %>
+            </a>
+            <% } %>
+        </div>
+    </section>
+<% } %>
+
         <div class='post-container'></div>
 
         <% if (ctx.editMode && ctx.canEditPostDescription) { %>
