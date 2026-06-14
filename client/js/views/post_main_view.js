@@ -23,6 +23,7 @@ class PostMainView {
         const sourceNode = template(ctx);
         const postContainerNode = sourceNode.querySelector(".post-container");
         const sidebarNode = sourceNode.querySelector(".sidebar");
+        this._installRelationStripToggle(sourceNode);
         views.replaceContent(this._hostNode, sourceNode);
         views.syncScrollPosition();
 
@@ -137,6 +138,29 @@ class PostMainView {
                 this._postContentControl
             );
         }
+    }
+
+    _installRelationStripToggle(sourceNode) {
+        sourceNode.addEventListener("click", (e) => {
+            if (!(e.target instanceof Element)) {
+                return;
+            }
+
+            const toggleNode = e.target.closest(".post-relation-strip-toggle");
+            if (!toggleNode || !sourceNode.contains(toggleNode)) {
+                return;
+            }
+
+            e.preventDefault();
+
+            const stripNode = toggleNode.closest(".post-relation-strip");
+            const postsNode = stripNode.querySelector(".post-relation-strip-posts");
+            const collapsed = !postsNode.hasAttribute("hidden");
+
+            postsNode.toggleAttribute("hidden", collapsed);
+            stripNode.classList.toggle("collapsed", collapsed);
+            toggleNode.textContent = collapsed ? "show »" : "hide «";
+        });
     }
 
     _installCommentForm() {

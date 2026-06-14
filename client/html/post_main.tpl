@@ -56,7 +56,7 @@
             This post has
             <%- ctx.post.relations.length %>
             related <%- ctx.post.relations.length === 1 ? 'post' : 'posts' %>
-            <a href='#' class='post-relation-strip-toggle' onclick="const strip=this.closest('.post-relation-strip'); const posts=strip.querySelector('.post-relation-strip-posts'); if (posts.hasAttribute('hidden')) { posts.removeAttribute('hidden'); strip.classList.remove('collapsed'); this.textContent='hide «'; } else { posts.setAttribute('hidden', ''); strip.classList.add('collapsed'); this.textContent='show »'; } return false;">hide «</a>
+            <a href='#' class='post-relation-strip-toggle'>hide «</a>
         </div>
 
         <div class='post-relation-strip-posts'>
