@@ -1,5 +1,5 @@
 use crate::api::error::ApiResult;
-use crate::content::hash::{Checksum, Md5Checksum};
+use crate::content::hash::{Checksum, Md5Checksum, Sha1Checksum};
 use crate::content::signature::COMPRESSED_SIGNATURE_LEN;
 use crate::content::thumbnail::ThumbnailType;
 use crate::content::upload::UploadToken;
@@ -17,6 +17,7 @@ pub struct CachedProperties {
     pub token: UploadToken,
     pub checksum: Checksum,
     pub md5_checksum: Md5Checksum,
+    pub sha1_checksum: Sha1Checksum,
     pub signature: [i64; COMPRESSED_SIGNATURE_LEN],
     pub thumbnail: DynamicImage,
     pub width: i32,
@@ -84,7 +85,7 @@ pub fn get_or_compute_properties(ctx: &Ctx, content_token: UploadToken) -> ApiRe
 fn compute_properties_no_cache(ctx: &Ctx, token: UploadToken) -> ApiResult<CachedProperties> {
     let temp_path = token.path(&ctx.config);
     let file_size = content::map_read_result(filesystem::file_size(&temp_path))?;
-    let (checksum, md5_checksum) = content::map_read_result(hash::compute_checksums(&temp_path))?;
+    let (checksum, md5_checksum, sha1_checksum) = content::map_read_result(hash::compute_checksums(&temp_path))?;
 
     let mime_type = token.mime_type();
     let post_type = PostType::from(mime_type);
@@ -105,6 +106,7 @@ fn compute_properties_no_cache(ctx: &Ctx, token: UploadToken) -> ApiResult<Cache
         token,
         checksum,
         md5_checksum,
+        sha1_checksum,
         signature: signature::compute(&image),
         thumbnail: thumbnail::create(&ctx.config, &image, ThumbnailType::Post),
         width: i32::try_from(image.width()).map_err(|_| LimitErrorKind::DimensionError)?,

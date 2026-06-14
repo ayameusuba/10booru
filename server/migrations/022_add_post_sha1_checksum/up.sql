@@ -1,0 +1,1 @@
+ALTER TABLE post ADD COLUMN checksum_sha1 BYTEA;

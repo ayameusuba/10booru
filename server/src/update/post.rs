@@ -308,6 +308,7 @@ pub fn merge(
                 post::mime_type.eq(absorbed_post.mime_type),
                 post::checksum.eq(&absorbed_post.checksum),
                 post::checksum_md5.eq(&absorbed_post.checksum_md5),
+                post::checksum_sha1.eq(absorbed_post.checksum_sha1.clone()),
                 post::flags.eq(absorbed_post.flags),
                 post::source.eq(&absorbed_post.source),
                 post::generated_thumbnail_size.eq(absorbed_post.generated_thumbnail_size),

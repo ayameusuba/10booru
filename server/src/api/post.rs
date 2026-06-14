@@ -624,6 +624,7 @@ async fn create_impl(ctx: Ctx, params: ResourceParams<Field>, body: PostCreateBo
                 mime_type: content_properties.mime_type,
                 checksum: content_properties.checksum,
                 checksum_md5: content_properties.md5_checksum,
+                checksum_sha1: Some(content_properties.sha1_checksum),
                 flags,
                 source: body.source.as_deref().unwrap_or(""),
                 description: body.description.as_deref().unwrap_or(""),
@@ -1032,6 +1033,7 @@ async fn update_impl(
                 new_post.mime_type = content_properties.mime_type;
                 new_post.checksum = content_properties.checksum;
                 new_post.checksum_md5 = content_properties.md5_checksum;
+                new_post.checksum_sha1 = Some(content_properties.sha1_checksum);
                 new_post.flags |= content_properties.flags;
 
                 // Update post signature

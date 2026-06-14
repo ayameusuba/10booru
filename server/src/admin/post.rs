@@ -129,7 +129,7 @@ fn check_integrity_in_parallel(
 
     let content_path = PostHash::new(&state.config, post_id).content_path(mime_type);
     let file_checksum = match hash::compute_checksums(&content_path) {
-        Ok((checksum, _)) => checksum,
+        Ok((checksum, _, _)) => checksum,
         Err(err) => {
             error!("Unable to read file for post {post_id} for reason: {err}");
             return Ok(());
@@ -192,7 +192,7 @@ fn recompute_checksum_in_parallel(
     };
 
     let image_path = PostHash::new(&state.config, post_id).content_path(mime_type);
-    let (checksum, md5_checksum) = match hash::compute_checksums(&image_path) {
+    let (checksum, md5_checksum, sha1_checksum) = match hash::compute_checksums(&image_path) {
         Ok(checksums) => checksums,
         Err(err) => {
             error!("Unable to compute checksum for post {post_id} for reason: {err}");
@@ -223,6 +223,7 @@ fn recompute_checksum_in_parallel(
         .set((
             post::checksum.eq(checksum),
             post::checksum_md5.eq(md5_checksum),
+            post::checksum_sha1.eq(Some(sha1_checksum)),
             post::last_edit_time.eq(DateTime::now()),
         ))
         .execute(&mut conn)

@@ -99,6 +99,7 @@ pub enum Field {
     MimeType,
     Checksum,
     ChecksumMd5,
+    ChecksumSha1,
     Flags,
     Source,
     Description,
@@ -161,6 +162,9 @@ pub struct PostInfo {
     /// The MD5 file checksum.
     #[serde(rename = "checksumMD5")]
     checksum_md5: Option<String>,
+    /// The SHA1 file checksum.
+    #[serde(rename = "checksumSHA1")]
+    checksum_sha1: Option<String>,
     /// Various flags such as whether the post is looped.
     flags: Option<PostFlags>,
     /// Where the post was grabbed form, supplied by the user.
@@ -301,6 +305,9 @@ impl PostInfo {
                 mime_type: fields[Field::MimeType].then_some(post.mime_type),
                 checksum: fields[Field::Checksum].then(|| hex::encode(&post.checksum)),
                 checksum_md5: fields[Field::ChecksumMd5].then(|| hex::encode(&post.checksum_md5)),
+                checksum_sha1: fields[Field::ChecksumSha1]
+                    .then(|| post.checksum_sha1.as_ref().map(hex::encode))
+                    .flatten(),
                 flags: fields[Field::Flags].then_some(post.flags),
                 source: fields[Field::Source].then_some(post.source),
                 description: fields[Field::Description].then_some(post.description),

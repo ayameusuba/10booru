@@ -1,4 +1,4 @@
-use crate::content::hash::{Checksum, Md5Checksum};
+use crate::content::hash::{Checksum, Md5Checksum, Sha1Checksum};
 use crate::content::signature::{COMPRESSED_SIGNATURE_LEN, NUM_WORDS};
 use crate::model::enums::{MimeType, PostFlags, PostSafety, PostType, Score};
 use crate::model::tag::Tag;
@@ -33,6 +33,7 @@ pub struct NewPost<'a> {
     pub mime_type: MimeType,
     pub checksum: Checksum,
     pub checksum_md5: Md5Checksum,
+    pub checksum_sha1: Option<Sha1Checksum>,
     pub flags: PostFlags,
     pub source: &'a str,
     pub description: &'a str,
@@ -54,6 +55,7 @@ pub struct Post {
     pub mime_type: MimeType,
     pub checksum: Checksum,
     pub checksum_md5: Md5Checksum,
+    pub checksum_sha1: Option<Sha1Checksum>,
     pub flags: PostFlags,
     pub source: LargeString,
     pub creation_time: DateTime,

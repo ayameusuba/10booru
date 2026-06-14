@@ -86,6 +86,7 @@ impl Display for PostHash<'_> {
 
 pub type Checksum = GenericChecksum<32>;
 pub type Md5Checksum = GenericChecksum<16>;
+pub type Sha1Checksum = GenericChecksum<20>;
 
 /// Represents a fixed-size checksum of length `N`.
 /// Can be deserialized from the database without allocation.
@@ -147,17 +148,19 @@ pub fn gravatar_url(config: &Config, username: &str) -> String {
     format!("https://gravatar.com/avatar/{hex_encoded_hash}?d=retro&s={}", config.thumbnails.avatar_width)
 }
 
-/// Computes the BLAKE3 and MD5 checksums of the file at `path` in a single pass.
+/// Computes the BLAKE3, MD5, and SHA1 checksums of the file at `path` in a single pass.
 ///
 /// BLAKE3 is strongly preferred for duplicate detection. MD5 is vulnerable to collisions
-/// and is only computed for convience for search on other sites.
-pub fn compute_checksums(path: &Path) -> std::io::Result<(Checksum, Md5Checksum)> {
+/// and is only computed for convenience for search on other sites.
+/// SHA1 is computed for compatibility with external reverse image search sites.
+pub fn compute_checksums(path: &Path) -> std::io::Result<(Checksum, Md5Checksum, Sha1Checksum)> {
     const KB: usize = 1024;
     const MB: usize = 1024 * KB;
     const BUFFER_CAPACITY: usize = 4 * MB;
 
     let mut file = File::open(path)?;
     let mut md5_ctx = md5::Context::new();
+    let mut sha1_hasher = <sha1::Sha1 as sha1::Digest>::new();
     let mut blake3_hasher = blake3::Hasher::new();
 
     let mut buffer = vec![0; BUFFER_CAPACITY];
@@ -169,11 +172,13 @@ pub fn compute_checksums(path: &Path) -> std::io::Result<(Checksum, Md5Checksum)
 
         blake3_hasher.update(&buffer[..n]);
         md5_ctx.consume(&buffer[..n]);
+        sha1::Digest::update(&mut sha1_hasher, &buffer[..n]);
     }
 
     let checksum = GenericChecksum(blake3_hasher.finalize().into());
     let md5_checksum = GenericChecksum(md5_ctx.compute().0);
-    Ok((checksum, md5_checksum))
+    let sha1_checksum = GenericChecksum::from_bytes(&sha1::Digest::finalize(sha1_hasher));
+    Ok((checksum, md5_checksum, sha1_checksum))
 }
 
 /// Similar to [`compute_checksum`], except checksum is base64 encoded.

@@ -103,6 +103,7 @@ diesel::table! {
         mime_type -> Int2,
         checksum -> Bytea,
         checksum_md5 -> Bytea,
+        checksum_sha1 -> Nullable<Bytea>,
         flags -> Int2,
         source -> Text,
         creation_time -> Timestamptz,

@@ -68,7 +68,7 @@
             <a target='_blank' rel='external noopener' href='https://iqdb.org/?url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>Iq</a> &middot;
             <a target='_blank' rel='external noopener' href='https://danbooru.donmai.us/posts?tags=md5:<%- ctx.post.checksumMD5 %>'>Db</a> &middot;
             <a target='_blank' rel='external noopener' href='https://gelbooru.com/index.php?page=post&s=list&tags=md5:<%- ctx.post.checksumMD5 %>'>Gb</a> &middot;
-            <a target='_blank' rel='external noopener' href='https://exhentai.org/?fs_similar=1&fs_exp=1&f_shash=<%- ctx.post.checksumSHA1 %>'>Ex</a> &middot;
+            <% if (ctx.post.checksumSHA1) { %><a target='_blank' rel='external noopener' href='https://exhentai.org/?fs_similar=1&fs_exp=1&f_shash=<%- ctx.post.checksumSHA1 %>'>Ex</a> &middot;<% } %>
             <a target='_blank' rel='external noopener' href='https://trace.moe/?url=<%- encodeURIComponent(ctx.post.fullContentUrl) %>'>Tm</a>
         </section>
         </div>
