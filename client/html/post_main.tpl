@@ -44,14 +44,6 @@
                 <% } %>
             </article>
             <% } %>
-            <% if (ctx.canListSnapshots) { %>
-            <article class='post-history'>
-                <a href='<%= ctx.postHistoryUrl %>'>
-                    <i class='fa fa-history'></i>
-                    <span class='vim-nav-hint'>Post history</span>
-                </a>
-            </article>
-            <% } %>
         </nav>
 
         <div class='sidebar-container'></div>

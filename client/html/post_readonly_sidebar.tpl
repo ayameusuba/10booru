@@ -145,4 +145,13 @@
             </p>
         <% } %>
     </nav>
+
+    <% if (ctx.canRestorePosts) { %>
+        <section class='post-history-link'>
+            <a href='<%= ctx.postHistoryUrl %>'>
+                <i class='fa fa-history'></i>
+                History
+            </a>
+        </section>
+    <% } %>
 </div>

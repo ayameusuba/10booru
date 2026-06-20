@@ -45,7 +45,8 @@ class Api extends events.EventTarget {
     }
 
     get(url, options) {
-        if (url in this.cache) {
+        const force = options && options.force;
+        if (!force && url in this.cache) {
             return new Promise((resolve, reject) => {
                 resolve(this.cache[url]);
             });
@@ -164,24 +165,39 @@ class Api extends events.EventTarget {
     }
 
     hasPrivilege(lookup) {
+        const minViableRank = this._getMinimumPrivilegeRank(lookup);
+        if (minViableRank === null) {
+            throw `Bad privilege name: ${lookup}`;
+        }
+        const myRank =
+            this.user !== null ? this.allRanks.indexOf(this.user.rank) : 0;
+        return myRank >= minViableRank;
+    }
+
+    hasOptionalPrivilege(lookup) {
+        const minViableRank = this._getMinimumPrivilegeRank(lookup);
+        if (minViableRank === null) {
+            return false;
+        }
+        const myRank =
+            this.user !== null ? this.allRanks.indexOf(this.user.rank) : 0;
+        return myRank >= minViableRank;
+    }
+
+    _getMinimumPrivilegeRank(lookup) {
         let minViableRank = null;
-        for (let p of Object.keys(remoteConfig.privileges)) {
-            if (!p.startsWith(lookup)) {
+        for (const privilege of Object.keys(remoteConfig.privileges)) {
+            if (!privilege.startsWith(lookup)) {
                 continue;
             }
             const rankIndex = this.allRanks.indexOf(
-                remoteConfig.privileges[p]
+                remoteConfig.privileges[privilege]
             );
             if (minViableRank === null || rankIndex < minViableRank) {
                 minViableRank = rankIndex;
             }
         }
-        if (minViableRank === null) {
-            throw `Bad privilege name: ${lookup}`;
-        }
-        let myRank =
-            this.user !== null ? this.allRanks.indexOf(this.user.rank) : 0;
-        return myRank >= minViableRank;
+        return minViableRank;
     }
 
     loginFromCookies() {

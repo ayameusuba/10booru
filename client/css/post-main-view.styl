@@ -432,3 +432,110 @@
 
         &.current
             box-shadow: 0 0 0 0.25em $top-navigation-color-darktheme
+
+.post-view .readonly-sidebar
+    .post-history-link
+        margin-top: 0.8em
+        padding-top: 0.65em
+        border-top: 1px solid $line-color
+
+.post-history-page
+    max-width: 56em
+    margin: 0 auto
+    padding: 1em
+
+    h1
+        margin: 0 0 0.55em
+
+    .post-history-post
+        margin: 0 0 0.75em
+        color: $inactive-link-color
+        line-height: 1.35
+
+    .post-history-error,
+    .revision-error
+        margin: 0 0 0.75em
+        padding: 0.5em
+        border-left: 0.25em solid $main-color
+
+    .revision-list
+        margin: 0
+        padding: 0
+        list-style: none
+
+    .revision
+        padding: 0.8em 0
+        border-top: 1px solid $line-color
+
+        &:first-child
+            border-top: 0
+
+    .revision-header
+        display: flex
+        justify-content: space-between
+        gap: 0.5em
+
+    .revision-time
+        flex: 0 0 auto
+        font-size: 85%
+        white-space: nowrap
+
+    .revision-meta,
+    .revision-summary
+        margin: 0.3em 0 0
+        color: $inactive-link-color
+        line-height: 1.35
+
+    .revision-editor
+        a
+            white-space: nowrap
+
+        img
+            width: 1.35em
+            height: 1.35em
+            margin: 0 0.25em
+            vertical-align: middle
+
+    .restore-revision,
+    .load-more-revisions
+        width: auto
+        margin-top: 0.6em
+
+    .revision-details
+        margin-top: 0.6em
+
+        dl
+            margin: 0.5em 0 0
+
+        dl > div
+            margin-top: 0.45em
+
+        dt
+            font-weight: bold
+
+        dd
+            margin: 0.1em 0 0
+
+        pre
+            margin: 0
+            white-space: pre-wrap
+            overflow-wrap: anywhere
+            font: inherit
+
+.darktheme .post-view .readonly-sidebar .post-history-link
+    border-color: $line-color
+
+.darktheme .post-history-page
+    .post-history-post,
+    .revision-meta,
+    .revision-summary
+        color: $inactive-link-color-darktheme
+
+@media (max-width: 800px)
+    .post-history-page
+        .revision-header
+            display: block
+
+        .revision-time
+            display: block
+            margin-top: 0.15em

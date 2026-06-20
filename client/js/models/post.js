@@ -348,6 +348,37 @@ class Post extends events.EventTarget {
             );
     }
 
+    restoreRevision(revisionId) {
+        const postUrl = uri.formatApiLink("post", this.id);
+
+        return api
+            .get(postUrl, { force: true })
+            .then((currentPost) =>
+                api.post(
+                    uri.formatApiLink(
+                        "post",
+                        this.id,
+                        "revision",
+                        revisionId,
+                        "restore"
+                    ),
+                    { version: currentPost.version }
+                )
+            )
+            .then(() => api.get(postUrl, { force: true }))
+            .then((response) => {
+                this._updateFromResponse(response);
+                this.dispatchEvent(
+                    new CustomEvent("change", {
+                        detail: {
+                            post: this,
+                        },
+                    })
+                );
+                return Promise.resolve();
+            });
+    }
+
     feature() {
         return api
             .post(uri.formatApiLink("featured-post"), { id: this._id })

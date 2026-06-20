@@ -21,10 +21,6 @@ class PostMainView {
     constructor(ctx) {
         this._hostNode = document.getElementById("content-holder");
 
-        ctx.canListSnapshots = api.hasPrivilege("snapshot_list");
-        ctx.postHistoryUrl = uri.formatClientLink("history", {
-            query: `resource-type:post id:${ctx.post.id}`,
-        });
         const sourceNode = template(ctx);
         const postContainerNode = sourceNode.querySelector(".post-container");
         const sidebarNode = sourceNode.querySelector(".sidebar");

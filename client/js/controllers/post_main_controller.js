@@ -9,6 +9,7 @@ const Comment = require("../models/comment.js");
 const Post = require("../models/post.js");
 const PostList = require("../models/post_list.js");
 const PostMainView = require("../views/post_main_view.js");
+const PostRevisionHistoryView = require("../views/post_revision_history_view.js");
 const BasePostController = require("./base_post_controller.js");
 const EmptyView = require("../views/empty_view.js");
 
@@ -301,7 +302,21 @@ class PostMainController extends BasePostController {
     }
 }
 
+class PostRevisionHistoryController {
+    constructor(ctx) {
+        this._view = new PostRevisionHistoryView(ctx.parameters.id);
+    }
+}
+
 module.exports = (router) => {
+    router.enter(["post", ":id", "history"], (ctx, next) => {
+        if (!api.hasOptionalPrivilege("post_restore")) {
+            router.show(uri.formatClientLink("post", ctx.parameters.id));
+            return;
+        }
+        ctx.controller = new PostRevisionHistoryController(ctx);
+    });
+
     router.enter(["post", ":id", "edit"], (ctx, next) => {
         // restore parameters from history state
         if (ctx.state.parameters) {
