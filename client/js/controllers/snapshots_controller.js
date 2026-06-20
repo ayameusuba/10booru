@@ -19,6 +19,8 @@ class SnapshotsController {
         topNavigation.activate("");
         topNavigation.setTitle("History");
 
+        const query = ctx.parameters.query || "";
+
         this._pageController = new PageController();
         this._pageController.run({
             parameters: ctx.parameters,
@@ -31,7 +33,7 @@ class SnapshotsController {
                 return uri.formatClientLink("history", parameters);
             },
             requestPage: (offset, limit) => {
-                return SnapshotList.search("", offset, limit);
+                return SnapshotList.search(query, offset, limit);
             },
             pageRenderer: (pageCtx) => {
                 Object.assign(pageCtx, {

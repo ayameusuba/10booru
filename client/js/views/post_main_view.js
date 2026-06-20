@@ -1,5 +1,6 @@
 "use strict";
 
+const api = require("../api.js");
 const iosCorrectedInnerHeight = require("ios-inner-height");
 const router = require("../router.js");
 const views = require("../util/views.js");
@@ -20,6 +21,10 @@ class PostMainView {
     constructor(ctx) {
         this._hostNode = document.getElementById("content-holder");
 
+        ctx.canListSnapshots = api.hasPrivilege("snapshot_list");
+        ctx.postHistoryUrl = uri.formatClientLink("history", {
+            query: `type:post id:${ctx.post.id}`,
+        });
         const sourceNode = template(ctx);
         const postContainerNode = sourceNode.querySelector(".post-container");
         const sidebarNode = sourceNode.querySelector(".sidebar");

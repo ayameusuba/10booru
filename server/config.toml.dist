@@ -179,7 +179,6 @@ comment_list               = "regular"
 comment_view               = "regular"
 comment_score              = "regular"
 
-snapshot_list              = "power"
-
+snapshot_list              = "moderator"
 upload_create              = "regular"
 upload_use_downloader      = "power"
