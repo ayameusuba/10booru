@@ -3,7 +3,9 @@
     <header>
         <h1><%- ctx.name %></h1>
     </header>
-    <% if (ctx.canListPosts) { %>
+    <% if (ctx.isPendingApproval) { %>
+        <p>Your account is awaiting administrator approval.</p>
+    <% } else if (ctx.canListPosts) { %>
         <form class='horizontal'>
             <%= ctx.makeTextInput({name: 'search-text', placeholder: 'enter some tags'}) %>
             <input type='submit' value='Search'/>

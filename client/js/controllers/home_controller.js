@@ -11,27 +11,33 @@ class HomeController {
         topNavigation.activate("home");
         topNavigation.setTitle("Home");
 
+        const canListPosts = api.hasPrivilege("post_list");
+
         this._homeView = new HomeView({
             name: api.getName(),
             version: config.meta.version,
             buildDate: config.meta.buildDate,
             canListSnapshots: api.hasPrivilege("snapshot_list"),
-            canListPosts: api.hasPrivilege("post_list"),
+            canListPosts,
+            isPendingApproval:
+                api.user !== null && api.user.rank === "restricted",
             isDevelopmentMode: config.environment == "development",
         });
 
-        api.fetchConfig().then(() => {
-            this._homeView.setStats({
-                postCount: api.getPostCount(),
-                diskUsage: api.getDiskUsage(),
+        if (canListPosts) {
+            api.fetchConfig().then(() => {
+                this._homeView.setStats({
+                    postCount: api.getPostCount(),
+                    diskUsage: api.getDiskUsage(),
+                });
+                this._homeView.setFeaturedPost({
+                    featuredPost: api.getFeaturedPost()
+                        ? Post.fromResponse(api.getFeaturedPost())
+                        : null,
+                    featuringUser: api.getFeaturingUser(),
+                });
             });
-            this._homeView.setFeaturedPost({
-                featuredPost: api.getFeaturedPost()
-                    ? Post.fromResponse(api.getFeaturedPost())
-                    : null,
-                featuringUser: api.getFeaturingUser(),
-            });
-        });
+        }
     }
 
     showSuccess(message) {
