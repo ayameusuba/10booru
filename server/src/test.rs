@@ -1,3 +1,4 @@
+use crate::content::hash::Sha1Checksum;
 use crate::admin::AdminResult;
 use crate::api::error::ApiResult;
 use crate::app::AppState;
