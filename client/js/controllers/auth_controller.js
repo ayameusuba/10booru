@@ -26,7 +26,6 @@ class LoginController {
             () => {
                 const ctx = router.show(uri.formatClientLink());
                 ctx.controller.showSuccess("Logged in");
-                // reload tag category color map, this is required when `tag_category_list` has a permission other than anonymous
                 tags.refreshCategoryColorMap();
                 pools.refreshCategoryColorMap();
             },
@@ -41,9 +40,10 @@ class LoginController {
 class LogoutController {
     constructor() {
         api.forget();
-        api.logout();
-        const ctx = router.show(uri.formatClientLink());
-        ctx.controller.showSuccess("Logged out");
+        api.logout().then(() => {
+            const ctx = router.show(uri.formatClientLink());
+            ctx.controller.showSuccess("Logged out");
+        });
     }
 }
 

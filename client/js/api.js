@@ -73,20 +73,34 @@ class Api extends events.EventTarget {
         return this._wrappedRequest(url, request.delete, data, {}, options);
     }
 
-    fetchConfig() {
+    fetchConfig(force = false) {
+        const infoUrl = uri.formatApiLink("info");
+
+        if (force) {
+            remoteConfig = null;
+            remoteConfigPromise = null;
+            delete this.cache[infoUrl];
+        }
+
         if (remoteConfig === null) {
             if (remoteConfigPromise !== null) {
                 return Promise.resolve(remoteConfigPromise);
             }
-            remoteConfigPromise = this.get(uri.formatApiLink("info")).then((response) => {
-                remoteConfig = response.config;
-                postCount = response.postCount;
-                diskUsage = response.diskUsage;
-                serverTime = response.serverTime;
-                featuredPost = response.featuredPost;
-                featuringTime = response.featuringTime;
-                featuringUser = response.featuringUser;
-            });
+            remoteConfigPromise = this.get(infoUrl).then(
+                (response) => {
+                    remoteConfig = response.config;
+                    postCount = response.postCount;
+                    diskUsage = response.diskUsage;
+                    serverTime = response.serverTime;
+                    featuredPost = response.featuredPost;
+                    featuringTime = response.featuringTime;
+                    featuringUser = response.featuringUser;
+                },
+                (error) => {
+                    remoteConfigPromise = null;
+                    return Promise.reject(error);
+                }
+            );
             return remoteConfigPromise;
         } else {
             return Promise.resolve();
@@ -194,8 +208,16 @@ class Api extends events.EventTarget {
                         options
                     );
                     this.user = response;
-                    resolve();
-                    this.dispatchEvent(new CustomEvent("login"));
+                    this.fetchConfig(true).then(
+                        () => {
+                            resolve();
+                            this.dispatchEvent(new CustomEvent("login"));
+                        },
+                        (error) => {
+                            reject(error);
+                            this.logout();
+                        }
+                    );
                 },
                 (error) => {
                     reject(error);
@@ -226,6 +248,7 @@ class Api extends events.EventTarget {
                     this.userName = userName;
                     this.token = response.token;
                     this.userPassword = null;
+                    resolve();
                 },
                 (error) => {
                     reject(error);
@@ -264,10 +287,19 @@ class Api extends events.EventTarget {
                     if (doRemember) {
                         options.expires = 365;
                     }
-                    this.createToken(this.userName, options);
                     this.user = response;
-                    resolve();
-                    this.dispatchEvent(new CustomEvent("login"));
+                    this.createToken(this.userName, options)
+                        .then(() => this.fetchConfig(true))
+                        .then(
+                            () => {
+                                resolve();
+                                this.dispatchEvent(new CustomEvent("login"));
+                            },
+                            (error) => {
+                                reject(error);
+                                this.logout();
+                            }
+                        );
                 },
                 (error) => {
                     reject(error);
@@ -279,7 +311,7 @@ class Api extends events.EventTarget {
 
     logout() {
         let self = this;
-        this.deleteToken(this.userName, this.token).then(
+        return this.deleteToken(this.userName, this.token).then(
             (response) => {
                 self._logout();
             },
@@ -290,6 +322,14 @@ class Api extends events.EventTarget {
     }
 
     _logout() {
+        this.cache = {};
+        postCount = 0;
+        diskUsage = 0;
+        serverTime = "";
+        featuredPost = null;
+        featuringTime = null;
+        featuringUser = null;
+
         this.user = null;
         this.userName = null;
         this.userPassword = null;
@@ -504,8 +544,9 @@ class Api extends events.EventTarget {
                 } else {
                     resolve(response.body);
                 }
-            });
         });
+        });
+
         returnedPromise.abort = () => abortFunction();
         return returnedPromise;
     }

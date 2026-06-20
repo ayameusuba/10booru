@@ -2,7 +2,7 @@ use crate::api::ResourceParams;
 use crate::api::doc::INFO_TAG;
 use crate::api::error::{ApiError, ApiResult};
 use crate::app::AppState;
-use crate::config::PublicConfig;
+use crate::config::{Action, PublicConfig};
 use crate::extract::{Ctx, Json, Query};
 use crate::model::post::PostFeature;
 use crate::resource::post::{Field, PostInfo};
@@ -23,11 +23,11 @@ pub fn routes() -> OpenApiRouter<AppState> {
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 struct InfoResponse {
-    /// Total number of posts on the server.
-    post_count: i64,
-    /// Total disk usage in bytes.
-    disk_usage: i64,
-    /// The currently featured post, or null if none.
+    /// Total number of posts on the server, when permitted.
+    post_count: Option<i64>,
+    /// Total disk usage in bytes, when permitted.
+    disk_usage: Option<i64>,
+    /// The currently featured post, or null when unavailable.
     featured_post: Option<PostInfo>,
     /// Time when the currently featured post was featured.
     featuring_time: Option<DateTime>,
@@ -39,12 +39,7 @@ struct InfoResponse {
     config: PublicConfig,
 }
 
-/// Retrieves simple statistics.
-///
-/// `featuredPost` is null if there is no featured post yet. `serverTime` is
-/// pretty much the same as the `Date` HTTP field, only formatted in a manner
-/// consistent with other dates. Values in the `config` key are taken directly
-/// from the server config.
+/// Retrieves simple server information.
 #[utoipa::path(
     get,
     path = "/info",
@@ -60,18 +55,34 @@ async fn get(
 ) -> ApiResult<Json<InfoResponse>> {
     connection_pool
         .transaction(move |conn| {
-            let (post_count, disk_usage) = database_statistics::table
-                .select((database_statistics::post_count, database_statistics::disk_usage))
-                .first(conn)?;
-            let latest_feature: Option<PostFeature> = post_feature::table
-                .order(post_feature::time.desc())
-                .first(conn)
-                .optional()?;
-            let featured_post: Option<PostInfo> = latest_feature
+            let (post_count, disk_usage) = if ctx.has_privilege(Action::PostList) {
+                let (post_count, disk_usage) = database_statistics::table
+                    .select((
+                        database_statistics::post_count,
+                        database_statistics::disk_usage,
+                    ))
+                    .first(conn)?;
+                (Some(post_count), Some(disk_usage))
+            } else {
+                (None, None)
+            };
+
+            let latest_feature: Option<PostFeature> =
+                if ctx.has_privilege(Action::PostViewFeatured) {
+                    post_feature::table
+                        .order(post_feature::time.desc())
+                        .first(conn)
+                        .optional()?
+                } else {
+                    None
+                };
+
+            let featured_post = latest_feature
                 .as_ref()
                 .map(|feature| PostInfo::new_from_id(conn, &ctx, feature.post_id, params.fields))
                 .transpose()?;
-            let featuring_user: Option<SmallString> = latest_feature
+
+            let featuring_user = latest_feature
                 .as_ref()
                 .map(|feature| {
                     user::table
