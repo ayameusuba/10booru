@@ -17,8 +17,8 @@ use crate::update::tag::FetchMode;
 use crate::{api, snapshot, update};
 use diesel::dsl::count_star;
 use diesel::{
-    ExpressionMethods, Insertable, OptionalExtension, PgConnection, QueryDsl, RunQueryDsl, SaveChangesDsl,
-    SelectableHelper,
+    ExpressionMethods, Insertable, OptionalExtension, PgConnection, QueryDsl, RunQueryDsl,
+    SaveChangesDsl, SelectableHelper,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -373,7 +373,15 @@ async fn merge(
             api::verify_version(absorbed_version, body.remove_version)?;
             api::verify_version(merge_to_version, body.merge_to_version)?;
 
+            let affected_post_ids: Vec<i64> = post_tag::table
+                .select(post_tag::post_id)
+                .filter(post_tag::tag_id.eq(absorbed_id))
+                .load(conn)?;
+            snapshot::post::save_initial_revisions(conn, ctx.client, affected_post_ids.clone())?;
+
             update::tag::merge(conn, absorbed_id, merge_to_id)?;
+            update::post::touch_posts(conn, &affected_post_ids)?;
+            snapshot::post::save_revisions(conn, ctx.client, affected_post_ids)?;
             snapshot::tag::merge_snapshot(conn, ctx.client, body.remove, &body.merge_to)?;
             Ok::<_, ApiError>(merge_to_id)
         })
@@ -481,23 +489,36 @@ async fn update(
             if let Some(implications) = body.implications {
                 ctx.verify_privilege(Action::TagEditImplication)?;
 
-                let (implied_ids, implications) =
-                    update::tag::get_or_create_tag_ids(conn, &ctx, implications, FetchMode::Acyclic)?;
+                let (implied_ids, implications) = update::tag::get_or_create_tag_ids(
+                    conn,
+                    &ctx,
+                    implications,
+                    FetchMode::Acyclic,
+                )?;
                 update::tag::set_implications(conn, tag_id, &implied_ids)?;
                 new_snapshot_data.implications = implications;
             }
             if let Some(suggestions) = body.suggestions {
                 ctx.verify_privilege(Action::TagEditSuggestion)?;
 
-                let (suggested_ids, suggestions) =
-                    update::tag::get_or_create_tag_ids(conn, &ctx, suggestions, FetchMode::Acyclic)?;
+                let (suggested_ids, suggestions) = update::tag::get_or_create_tag_ids(
+                    conn,
+                    &ctx,
+                    suggestions,
+                    FetchMode::Acyclic,
+                )?;
                 update::tag::set_suggestions(conn, tag_id, &suggested_ids)?;
                 new_snapshot_data.suggestions = suggestions;
             }
 
             new_tag.last_edit_time = DateTime::now();
             let _: Tag = new_tag.save_changes(conn)?;
-            snapshot::tag::modification_snapshot(conn, ctx.client, old_snapshot_data, new_snapshot_data)?;
+            snapshot::tag::modification_snapshot(
+                conn,
+                ctx.client,
+                old_snapshot_data,
+                new_snapshot_data,
+            )?;
             Ok::<_, ApiError>(tag_id)
         })
         .await?;
@@ -553,7 +574,11 @@ async fn delete(
         .await
 }
 
-fn verify_visibility(conn: &mut PgConnection, ctx: &Context, tag_name: &SmallString) -> ApiResult<i64> {
+fn verify_visibility(
+    conn: &mut PgConnection,
+    ctx: &Context,
+    tag_name: &SmallString,
+) -> ApiResult<i64> {
     let (tag_id, category_name): (i64, SmallString) = tag::table
         .inner_join(tag_name::table)
         .inner_join(tag_category::table)
@@ -565,7 +590,9 @@ fn verify_visibility(conn: &mut PgConnection, ctx: &Context, tag_name: &SmallStr
 
     if ctx.client.rank == UserRank::Anonymous {
         let preferences = &ctx.config.anonymous_preferences;
-        if preferences.tag_blacklist.contains(tag_name) || preferences.tag_category_blacklist.contains(&category_name) {
+        if preferences.tag_blacklist.contains(tag_name)
+            || preferences.tag_category_blacklist.contains(&category_name)
+        {
             return Err(ApiError::Hidden(ResourceType::Tag));
         }
     }
@@ -583,7 +610,9 @@ mod test {
     use crate::test::*;
     use crate::time::DateTime;
     use diesel::dsl::exists;
-    use diesel::{ExpressionMethods, PgConnection, QueryDsl, QueryResult, RunQueryDsl, SelectableHelper};
+    use diesel::{
+        ExpressionMethods, PgConnection, QueryDsl, QueryResult, RunQueryDsl, SelectableHelper,
+    };
     use serial_test::{parallel, serial};
     use strum::IntoEnumIterator;
 
@@ -653,7 +682,11 @@ mod test {
         let mut conn = get_connection()?;
         let last_edit_time = get_last_edit_time(&mut conn)?;
 
-        verify_response(&format!("GET /tag-siblings/{NAME}/?{FIELDS}"), "tag/get_siblings").await?;
+        verify_response(
+            &format!("GET /tag-siblings/{NAME}/?{FIELDS}"),
+            "tag/get_siblings",
+        )
+        .await?;
 
         let new_last_edit_time = get_last_edit_time(&mut conn)?;
         assert_eq!(new_last_edit_time, last_edit_time);
@@ -722,7 +755,8 @@ mod test {
         let has_tag: bool = diesel::select(exists(tag::table.find(remove_id))).first(&mut conn)?;
         assert!(!has_tag);
 
-        let (new_tag, new_usage_count, new_implication_count, new_suggestion_count) = get_tag_info(&mut conn)?;
+        let (new_tag, new_usage_count, new_implication_count, new_suggestion_count) =
+            get_tag_info(&mut conn)?;
         assert_eq!(new_tag.id, tag.id);
         assert_eq!(new_tag.category_id, tag.category_id);
         assert_eq!(new_tag.description, tag.description);
@@ -739,22 +773,24 @@ mod test {
     #[serial]
     async fn update() -> ApiResult<()> {
         const NAME: &str = "creek";
-        let get_tag_info = |conn: &mut PgConnection, name: &str| -> QueryResult<(Tag, i64, i64, i64)> {
-            tag::table
-                .inner_join(tag_statistics::table)
-                .inner_join(tag_name::table)
-                .select((
-                    Tag::as_select(),
-                    tag_statistics::usage_count,
-                    tag_statistics::implication_count,
-                    tag_statistics::suggestion_count,
-                ))
-                .filter(tag_name::name.eq(name))
-                .first(conn)
-        };
+        let get_tag_info =
+            |conn: &mut PgConnection, name: &str| -> QueryResult<(Tag, i64, i64, i64)> {
+                tag::table
+                    .inner_join(tag_statistics::table)
+                    .inner_join(tag_name::table)
+                    .select((
+                        Tag::as_select(),
+                        tag_statistics::usage_count,
+                        tag_statistics::implication_count,
+                        tag_statistics::suggestion_count,
+                    ))
+                    .filter(tag_name::name.eq(name))
+                    .first(conn)
+            };
 
         let mut conn = get_connection()?;
-        let (tag, usage_count, implication_count, suggestion_count) = get_tag_info(&mut conn, NAME)?;
+        let (tag, usage_count, implication_count, suggestion_count) =
+            get_tag_info(&mut conn, NAME)?;
 
         verify_response(&format!("PUT /tag/{NAME}/?{FIELDS}"), "tag/edit").await?;
 
@@ -774,12 +810,20 @@ mod test {
         assert_ne!(new_implication_count, implication_count);
         assert_ne!(new_suggestion_count, suggestion_count);
 
-        verify_response(&format!("PUT /tag/{new_name}/?{FIELDS}"), "tag/edit_restore").await?;
+        verify_response(
+            &format!("PUT /tag/{new_name}/?{FIELDS}"),
+            "tag/edit_restore",
+        )
+        .await?;
 
-        let new_tag_id: i64 = tag::table.select(tag::id).order(tag::id.desc()).first(&mut conn)?;
+        let new_tag_id: i64 = tag::table
+            .select(tag::id)
+            .order(tag::id.desc())
+            .first(&mut conn)?;
         diesel::delete(tag::table.find(new_tag_id)).execute(&mut conn)?;
 
-        let (new_tag, new_usage_count, new_implication_count, new_suggestion_count) = get_tag_info(&mut conn, NAME)?;
+        let (new_tag, new_usage_count, new_implication_count, new_suggestion_count) =
+            get_tag_info(&mut conn, NAME)?;
         assert_eq!(new_tag.id, tag.id);
         assert_eq!(new_tag.category_id, tag.category_id);
         assert_eq!(new_tag.description, tag.description);
@@ -800,7 +844,12 @@ mod test {
             "tag/list_with_preferences",
         )
         .await?;
-        verify_response_with_user(UserRank::Anonymous, "GET /tag/tagme", "tag/get_with_preferences").await?;
+        verify_response_with_user(
+            UserRank::Anonymous,
+            "GET /tag/tagme",
+            "tag/get_with_preferences",
+        )
+        .await?;
         verify_response_with_user(
             UserRank::Anonymous,
             "GET /tag-siblings/rock/?fields=names,implications,suggestions",

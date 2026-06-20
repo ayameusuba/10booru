@@ -115,6 +115,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    post_revision (id) {
+        id -> Int8,
+        post_id -> Int8,
+        user_id -> Nullable<Int8>,
+        restored_from_revision_id -> Nullable<Int8>,
+        data -> Jsonb,
+        creation_time -> Timestamptz,
+    }
+}
+
+diesel::table! {
     post_favorite (post_id, user_id) {
         post_id -> Int8,
         user_id -> Int8,
@@ -313,6 +324,8 @@ diesel::joinable!(pool_post -> pool (pool_id));
 diesel::joinable!(pool_post -> post (post_id));
 diesel::joinable!(pool_statistics -> pool (pool_id));
 diesel::joinable!(post -> user (user_id));
+diesel::joinable!(post_revision -> post (post_id));
+diesel::joinable!(post_revision -> user (user_id));
 diesel::joinable!(post_favorite -> post (post_id));
 diesel::joinable!(post_favorite -> user (user_id));
 diesel::joinable!(post_feature -> post (post_id));
@@ -344,6 +357,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     pool_post,
     pool_statistics,
     post,
+    post_revision,
     post_favorite,
     post_feature,
     post_note,

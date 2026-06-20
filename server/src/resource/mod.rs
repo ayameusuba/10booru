@@ -8,6 +8,7 @@ pub mod field;
 pub mod pool;
 pub mod pool_category;
 pub mod post;
+pub mod post_revision;
 pub mod snapshot;
 pub mod tag;
 pub mod tag_category;
@@ -88,7 +89,9 @@ where
 {
     assert!(unordered_values.len() <= ordered_values.len());
 
-    let mut results: Vec<Option<V>> = std::iter::repeat_with(|| None).take(ordered_values.len()).collect();
+    let mut results: Vec<Option<V>> = std::iter::repeat_with(|| None)
+        .take(ordered_values.len())
+        .collect();
     for value in unordered_values {
         let value_id = get_id(&value);
         let index = ordered_values

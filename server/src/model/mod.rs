@@ -3,6 +3,7 @@ pub mod enums;
 pub mod pool;
 pub mod pool_category;
 pub mod post;
+pub mod post_revision;
 pub mod snapshot;
 pub mod tag;
 pub mod tag_category;

@@ -117,6 +117,7 @@ pub enum Action {
     PostEditSource,
     PostEditTag,
     PostEditThumbnail,
+    PostRestore,
     PostFeature,
     PostDelete,
     PostScore,
@@ -325,7 +326,8 @@ pub fn create() -> Config {
 /// Creates a test config with an optional `override_relative_path` to override the default config.
 #[cfg(test)]
 pub fn test_config(override_relative_path: Option<&str>) -> Config {
-    let override_path = override_relative_path.map(|relative_path| format!("test/request/{relative_path}/config"));
+    let override_path =
+        override_relative_path.map(|relative_path| format!("test/request/{relative_path}/config"));
     create_config(override_path.as_deref())
 }
 
@@ -346,7 +348,8 @@ pub fn database_url(database_override: Option<&str>) -> String {
     }
 
     let user = std::env::var("POSTGRES_USER").expect("POSTGRES_USER must be defined in .env");
-    let password = std::env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD must be defined in .env");
+    let password =
+        std::env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD must be defined in .env");
     let hostname = std::env::var("POSTGRES_HOST").unwrap_or_else(|_| "localhost".into());
     let port = std::env::var("POSTGRES_PORT")
         .ok()
@@ -362,13 +365,16 @@ const DOCKER_DEPLOYMENT: bool = option_env!("DOCKER_DEPLOYMENT").is_some();
 const DEFAULT_CONFIG: &str = include_str!("../config.toml.dist");
 
 fn create_config(config_path: Option<&str>) -> Config {
-    let mut config_builder =
-        ConfigBuilder::<DefaultState>::default().add_source(File::from_str(DEFAULT_CONFIG, FileFormat::Toml));
+    let mut config_builder = ConfigBuilder::<DefaultState>::default()
+        .add_source(File::from_str(DEFAULT_CONFIG, FileFormat::Toml));
     if let Some(path) = config_path {
         config_builder = config_builder.add_source(File::with_name(path));
     }
 
-    let mut config: Config = match config_builder.build().and_then(config::Config::try_deserialize) {
+    let mut config: Config = match config_builder
+        .build()
+        .and_then(config::Config::try_deserialize)
+    {
         Ok(parsed) => parsed,
         Err(err) => {
             // We use `eprintln!` instead of `error!` here because tracing hasn't been initialized yet

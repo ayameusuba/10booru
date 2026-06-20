@@ -8,12 +8,13 @@ use crate::model::comment::NewComment;
 use crate::model::enums::{ResourceProperty, ResourceType};
 use crate::model::pool::PoolPost;
 use crate::model::post::{
-    CompressedSignature, NewPostFeature, Post, PostFavorite, PostRelation, PostScore, PostTag, SignatureIndexes,
+    CompressedSignature, NewPostFeature, Post, PostFavorite, PostRelation, PostScore, PostTag,
+    SignatureIndexes,
 };
 use crate::resource::post::Note;
 use crate::schema::{
-    comment, pool_post, post, post_favorite, post_feature, post_note, post_relation, post_score, post_signature,
-    post_tag,
+    comment, pool_post, post, post_favorite, post_feature, post_note, post_relation, post_score,
+    post_signature, post_tag,
 };
 use crate::search::preferences;
 use crate::time::DateTime;
@@ -24,7 +25,18 @@ use std::collections::HashSet;
 
 /// Updates `last_edit_time` of post associated with `post_id`.
 pub fn last_edit_time(conn: &mut PgConnection, post_id: i64) -> ApiResult<()> {
-    diesel::update(post::table.find(post_id))
+    touch_posts(conn, &[post_id])
+}
+
+pub fn touch_posts(conn: &mut PgConnection, post_ids: &[i64]) -> ApiResult<()> {
+    let mut post_ids = post_ids.to_vec();
+    post_ids.sort_unstable();
+    post_ids.dedup();
+    if post_ids.is_empty() {
+        return Ok(());
+    }
+
+    diesel::update(post::table.filter(post::id.eq_any(post_ids)))
         .set(post::last_edit_time.eq(DateTime::now()))
         .execute(conn)?;
     Ok(())
@@ -56,8 +68,8 @@ pub fn set_relations(
     ctx: &Context,
     post_id: i64,
     new_related_posts: &mut Vec<i64>,
-) -> ApiResult<()> {
-    // Add relations client doesn't know about
+) -> ApiResult<Vec<i64>> {
+    // Add relations client doesn't know about.
     if let Some(hidden_posts) = preferences::hidden_posts(ctx, post_relation::child_id) {
         let hidden_relations: Vec<i64> = post_relation::table
             .select(post_relation::child_id)
@@ -67,8 +79,7 @@ pub fn set_relations(
         new_related_posts.extend(hidden_relations);
     }
 
-    // Delete old relations and return old related posts ids.
-    // Post relations are bi-directional, so it doesn't matter whether we return parent_id or child_id.
+    // Post relations are bidirectional, so returned child IDs include both endpoints.
     let old_related_posts: HashSet<_> = diesel::delete(post_relation::table)
         .filter(post_relation::parent_id.eq(post_id))
         .or_filter(post_relation::child_id.eq(post_id))
@@ -79,34 +90,48 @@ pub fn set_relations(
 
     add_relations(conn, post_id, new_related_posts)?;
 
-    // Update last edit time for any posts involved in removed or added relations.
     let new_related_posts: HashSet<_> = new_related_posts.iter().copied().collect();
-    let updated_posts: Vec<_> = old_related_posts
+    let changed_post_ids: Vec<_> = old_related_posts
         .symmetric_difference(&new_related_posts)
         .copied()
         .collect();
-    diesel::update(post::table)
-        .set(post::last_edit_time.eq(DateTime::now()))
-        .filter(post::id.eq_any(updated_posts))
-        .execute(conn)?;
-    Ok(())
+
+    touch_posts(conn, &changed_post_ids)?;
+
+    Ok(changed_post_ids
+        .into_iter()
+        .filter(|&changed_post_id| changed_post_id != post_id)
+        .collect())
 }
 
 /// Inserts relations between `post_id` and `new_related_posts`, bidirectionally.
-pub fn add_relations(conn: &mut PgConnection, post_id: i64, new_related_posts: &[i64]) -> ApiResult<()> {
+pub fn add_relations(
+    conn: &mut PgConnection,
+    post_id: i64,
+    new_related_posts: &[i64],
+) -> ApiResult<()> {
     let new_relations: Vec<_> = new_related_posts
         .iter()
         .filter(|&&id| id != post_id)
         .flat_map(|&other_id| PostRelation::new_pair(post_id, other_id))
         .collect();
-    let insert_result = new_relations.insert_into(post_relation::table).execute(conn);
-    error::map_unique_or_foreign_key_violation(insert_result, ResourceProperty::PostRelation, ResourceType::Post)?;
+    let insert_result = new_relations
+        .insert_into(post_relation::table)
+        .execute(conn);
+    error::map_unique_or_foreign_key_violation(
+        insert_result,
+        ResourceProperty::PostRelation,
+        ResourceType::Post,
+    )?;
     Ok(())
 }
 
 /// Replaces the current set of tags with `tags` for post associated with `post_id`.
 pub fn set_tags(conn: &mut PgConnection, post_id: i64, tags: &[i64]) -> QueryResult<()> {
-    let new_post_tags: Vec<_> = tags.iter().map(|&tag_id| PostTag { post_id, tag_id }).collect();
+    let new_post_tags: Vec<_> = tags
+        .iter()
+        .map(|&tag_id| PostTag { post_id, tag_id })
+        .collect();
 
     diesel::delete(post_tag::table)
         .filter(post_tag::post_id.eq(post_id))
@@ -117,7 +142,10 @@ pub fn set_tags(conn: &mut PgConnection, post_id: i64, tags: &[i64]) -> QueryRes
 
 /// Replaces the current set of notes with `notes` for post associated with `post_id`.
 pub fn set_notes(conn: &mut PgConnection, post_id: i64, notes: &[Note]) -> QueryResult<()> {
-    let new_post_notes: Vec<_> = notes.iter().map(|note| note.to_new_post_note(post_id)).collect();
+    let new_post_notes: Vec<_> = notes
+        .iter()
+        .map(|note| note.to_new_post_note(post_id))
+        .collect();
 
     diesel::delete(post_note::table)
         .filter(post_note::post_id.eq(post_id))
@@ -164,7 +192,9 @@ pub fn merge(
         .or_filter(post_relation::child_id.eq(merge_to_id))
         .execute(conn)?;
     let merged_relations: Vec<_> = merged_relations.into_iter().collect();
-    merged_relations.insert_into(post_relation::table).execute(conn)?;
+    merged_relations
+        .insert_into(post_relation::table)
+        .execute(conn)?;
 
     // Merge tags
     let merge_to_tags = post_tag::table
@@ -240,25 +270,31 @@ pub fn merge(
             time,
         })
         .collect();
-    new_favorites.insert_into(post_favorite::table).execute(conn)?;
+    new_favorites
+        .insert_into(post_favorite::table)
+        .execute(conn)?;
 
     // Merge features
-    let new_features: Vec<_> = diesel::delete(post_feature::table.filter(post_feature::post_id.eq(absorbed_id)))
-        .returning((post_feature::user_id, post_feature::time))
-        .get_results(conn)?
-        .into_iter()
-        .map(|(user_id, time)| NewPostFeature {
-            post_id: merge_to_id,
-            user_id,
-            time,
-        })
-        .collect();
-    new_features.insert_into(post_feature::table).execute(conn)?;
+    let new_features: Vec<_> =
+        diesel::delete(post_feature::table.filter(post_feature::post_id.eq(absorbed_id)))
+            .returning((post_feature::user_id, post_feature::time))
+            .get_results(conn)?
+            .into_iter()
+            .map(|(user_id, time)| NewPostFeature {
+                post_id: merge_to_id,
+                user_id,
+                time,
+            })
+            .collect();
+    new_features
+        .insert_into(post_feature::table)
+        .execute(conn)?;
 
     // Merge comments
-    let removed_comments: Vec<(_, String, _)> = diesel::delete(comment::table.filter(comment::post_id.eq(absorbed_id)))
-        .returning((comment::user_id, comment::text, comment::creation_time))
-        .get_results(conn)?;
+    let removed_comments: Vec<(_, String, _)> =
+        diesel::delete(comment::table.filter(comment::post_id.eq(absorbed_id)))
+            .returning((comment::user_id, comment::text, comment::creation_time))
+            .get_results(conn)?;
     let new_comments: Vec<_> = removed_comments
         .iter()
         .map(|(user_id, text, creation_time)| NewComment {
@@ -271,7 +307,8 @@ pub fn merge(
     new_comments.insert_into(comment::table).execute(conn)?;
 
     // Merge descriptions
-    let merged_description = merge_to_post.description.to_string() + "\n\n" + &absorbed_post.description;
+    let merged_description =
+        merge_to_post.description.to_string() + "\n\n" + &absorbed_post.description;
     diesel::update(post::table.find(merge_to_id))
         .set(post::description.eq(merged_description.trim()))
         .execute(conn)?;
@@ -283,7 +320,10 @@ pub fn merge(
             .select((post_signature::signature, post_signature::words))
             .first(conn)?;
         diesel::update(post_signature::table.find(merge_to_id))
-            .set((post_signature::signature.eq(signature), post_signature::words.eq(indexes)))
+            .set((
+                post_signature::signature.eq(signature),
+                post_signature::words.eq(indexes),
+            ))
             .execute(conn)?;
     }
 
