@@ -26,7 +26,7 @@ const MAX_SNAPSHOTS_PER_PAGE: i64 = 1000;
 ///
 /// | Key            | Description                                                      |
 /// | -------------- | ---------------------------------------------------------------- |
-/// | `type`         | involving given resource type                                    |
+/// | `resource-type` | involving given resource type                                    |
 /// | `id`           | involving given resource id                                      |
 /// | `date`, `time` | created at given date                                            |
 /// | `operation`    | `modified`, `created`, `deleted` or `merged`                     |

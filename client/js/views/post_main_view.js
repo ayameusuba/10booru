@@ -23,7 +23,7 @@ class PostMainView {
 
         ctx.canListSnapshots = api.hasPrivilege("snapshot_list");
         ctx.postHistoryUrl = uri.formatClientLink("history", {
-            query: `type:post id:${ctx.post.id}`,
+            query: `resource-type:post id:${ctx.post.id}`,
         });
         const sourceNode = template(ctx);
         const postContainerNode = sourceNode.querySelector(".post-container");
